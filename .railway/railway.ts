@@ -22,7 +22,7 @@ export default defineRailway(() => {
     env: {
       NODE_ENV: "production",
       AUTH_BYPASS: "false",
-      WEB_ORIGIN: "https://braincrew-production.up.railway.app,https://braincrew.ai",
+      WEB_ORIGIN: "https://braincrew-production-c6e7.up.railway.app,https://braincrew.ai",
       DATABASE_URL: preserve(),
       DIRECT_URL: preserve(),
       WEBHOOK_DATABASE_URL: preserve(),
@@ -32,8 +32,8 @@ export default defineRailway(() => {
       STRIPE_SECRET_KEY: preserve(),
       STRIPE_WEBHOOK_SECRET: preserve(),
       STRIPE_PRICE_ID: preserve(),
-      STRIPE_SUCCESS_URL: "https://braincrew-production.up.railway.app/settings?billing=success",
-      STRIPE_CANCEL_URL: "https://braincrew-production.up.railway.app/settings?billing=cancelled",
+      STRIPE_SUCCESS_URL: "https://braincrew-production-c6e7.up.railway.app/settings?billing=success",
+      STRIPE_CANCEL_URL: "https://braincrew-production-c6e7.up.railway.app/settings?billing=cancelled",
     },
   });
 
