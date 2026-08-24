@@ -41,11 +41,11 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <BrandMark className="mb-12 lg:hidden" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--brand)]">
-            Ravi de vous revoir
+            Votre cockpit Braincrew
           </p>
           <h2 className="mt-3 text-4xl font-black tracking-[-0.05em]">Monter à bord.</h2>
           <p className="mt-3 text-sm text-[var(--muted)]">
-            Connectez-vous à votre espace entreprise.
+            Connectez-vous ou créez votre espace entreprise.
           </p>
           <Card className="mt-8">
             <CardContent className="p-6">

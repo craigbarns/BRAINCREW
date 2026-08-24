@@ -2,8 +2,9 @@
 
 import { Button, Input, Label, Select, Textarea } from "@braincrew/ui";
 import { Bot, Check, Globe2, Mail, PanelsTopLeft, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, BraincrewApiError } from "@/lib/api";
 
 const capabilities = [
   {
@@ -36,7 +37,14 @@ const fallbackModels: ModelOption[] = [
   },
 ];
 
-export function AgentBuilder({ defaultOpen = false }: { defaultOpen?: boolean }) {
+export function AgentBuilder({
+  defaultOpen = false,
+  onCreated,
+}: {
+  defaultOpen?: boolean;
+  onCreated?: () => void | Promise<void>;
+}) {
+  const router = useRouter();
   const [open, setOpen] = useState(defaultOpen);
   const [selected, setSelected] = useState(["web-access"]);
   const [models, setModels] = useState<ModelOption[]>(fallbackModels);
@@ -91,13 +99,23 @@ export function AgentBuilder({ defaultOpen = false }: { defaultOpen?: boolean })
             .map((plugin) => plugin.id),
         }),
       });
+      await onCreated?.();
       setSaved(true);
       setTimeout(() => {
         setOpen(false);
         setSaved(false);
       }, 900);
-    } catch {
-      setError("Impossible de créer l’agent. Vérifiez que l’API Braincrew est démarrée.");
+    } catch (caught) {
+      if (caught instanceof BraincrewApiError && caught.status === 401) {
+        setError("Votre session a expiré. Reconnectez-vous pour créer l’agent.");
+        setTimeout(() => router.replace("/login"), 900);
+      } else {
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Impossible de créer l’agent. Réessayez dans un instant.",
+        );
+      }
     } finally {
       setPending(false);
     }
