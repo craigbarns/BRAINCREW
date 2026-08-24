@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "plugins/*"
+
+catalog:
+  zod: ^4.1.5

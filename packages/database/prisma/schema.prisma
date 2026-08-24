@@ -1,0 +1,680 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  BUILDER
+  VIEWER
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+enum AgentStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum VersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PluginKind {
+  TOOL
+  INTEGRATION
+  MEMORY
+  MODEL
+  GUARDRAIL
+}
+
+enum InstallationStatus {
+  ACTIVE
+  DISABLED
+  ERROR
+}
+
+enum CredentialKind {
+  API_KEY
+  OAUTH2
+  BASIC_AUTH
+  SERVICE_ACCOUNT
+  CUSTOM
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum WorkflowNodeKind {
+  START
+  AGENT
+  CONDITION
+  PARALLEL
+  JOIN
+  HUMAN_APPROVAL
+  DELAY
+  END
+}
+
+enum TriggerKind {
+  MANUAL
+  SCHEDULE
+  WEBHOOK
+  EVENT
+}
+
+enum ExecutionKind {
+  AGENT
+  WORKFLOW
+}
+
+enum ExecutionStatus {
+  QUEUED
+  RUNNING
+  WAITING_APPROVAL
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  TIMED_OUT
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  UNPAID
+  PAUSED
+}
+
+enum AuditActorKind {
+  USER
+  API_KEY
+  SYSTEM
+  WEBHOOK
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+model Organization {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  name                  String
+  slug                  String                 @unique
+  status                OrganizationStatus     @default(ACTIVE)
+  timezone              String                 @default("Europe/Paris")
+  locale                String                 @default("fr")
+  metadata              Json                   @default("{}") @db.JsonB
+  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
+  deletedAt             DateTime?              @db.Timestamptz(3)
+  branding              OrganizationBranding?
+  memberships           Membership[]
+  apiKeys               ApiKey[]
+  credentials           Credential[]
+  pluginInstallations   PluginInstallation[]
+  agents                Agent[]
+  agentVersions         AgentVersion[]
+  agentVersionPlugins   AgentVersionPlugin[]
+  workflows             Workflow[]
+  workflowVersions      WorkflowVersion[]
+  workflowNodes         WorkflowNode[]
+  workflowEdges         WorkflowEdge[]
+  workflowTriggers      WorkflowTrigger[]
+  executions            Execution[]
+  executionSteps        ExecutionStep[]
+  executionEvents       ExecutionEvent[]
+  usageEvents           UsageEvent[]
+  auditLogs             AuditLog[]
+  subscription          Subscription?
+  externalWebhookEvents ExternalWebhookEvent[]
+  outboxEvents          OutboxEvent[]
+}
+
+model OrganizationBranding {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @unique @db.Uuid
+  logoUrl        String?
+  faviconUrl     String?
+  primaryColor   String       @default("#6D5EF5")
+  secondaryColor String       @default("#111827")
+  accentColor    String       @default("#22C55E")
+  customDomain   String?      @unique
+  emailFromName  String?
+  metadata       Json         @default("{}") @db.JsonB
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  // Same UUID as auth.users.id in Supabase Auth.
+  id          String       @id @db.Uuid
+  email       String       @unique
+  firstName   String?
+  lastName    String?
+  avatarUrl   String?
+  lastSeenAt  DateTime?    @db.Timestamptz(3)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  memberships Membership[]
+}
+
+model Membership {
+  organizationId String           @db.Uuid
+  userId         String           @db.Uuid
+  role           OrganizationRole
+  status         MembershipStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(3)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@index([userId, status])
+}
+
+model ApiKey {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @db.Uuid
+  name            String
+  prefix          String       @unique
+  secretHash      String
+  scopes          String[]     @default([])
+  lastUsedAt      DateTime?    @db.Timestamptz(3)
+  expiresAt       DateTime?    @db.Timestamptz(3)
+  revokedAt       DateTime?    @db.Timestamptz(3)
+  createdByUserId String?      @db.Uuid
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, revokedAt])
+}
+
+model ModelDefinition {
+  id                   String         @id @default(uuid()) @db.Uuid
+  key                  String         @unique
+  provider             String
+  modelName            String
+  displayName          String
+  enabled              Boolean        @default(true)
+  capabilities         Json           @default("{}") @db.JsonB
+  inputPricePerMToken  Decimal?       @db.Decimal(18, 8)
+  outputPricePerMToken Decimal?       @db.Decimal(18, 8)
+  createdAt            DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime       @updatedAt @db.Timestamptz(3)
+  agentVersions        AgentVersion[]
+  usageEvents          UsageEvent[]
+}
+
+model Credential {
+  id               String               @id @default(uuid()) @db.Uuid
+  organizationId   String               @db.Uuid
+  name             String
+  kind             CredentialKind
+  provider         String
+  encryptedPayload Bytes
+  encryptionKeyId  String
+  scopes           String[]             @default([])
+  expiresAt        DateTime?            @db.Timestamptz(3)
+  revokedAt        DateTime?            @db.Timestamptz(3)
+  metadata         Json                 @default("{}") @db.JsonB
+  createdByUserId  String?              @db.Uuid
+  createdAt        DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime             @updatedAt @db.Timestamptz(3)
+  organization     Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  installations    PluginInstallation[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, name])
+  @@index([organizationId, provider, revokedAt])
+}
+
+model PluginDefinition {
+  id             String               @id @default(uuid()) @db.Uuid
+  key            String
+  version        String
+  displayName    String
+  description    String?
+  kind           PluginKind
+  packageName    String
+  entrypoint     String?
+  configSchema   Json                 @default("{}") @db.JsonB
+  requiredScopes String[]             @default([])
+  enabled        Boolean              @default(true)
+  createdAt      DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @db.Timestamptz(3)
+  installations  PluginInstallation[]
+
+  @@unique([key, version])
+  @@index([kind, enabled])
+}
+
+model PluginInstallation {
+  id                  String               @id @default(uuid()) @db.Uuid
+  organizationId      String               @db.Uuid
+  pluginDefinitionId  String               @db.Uuid
+  credentialId        String?              @db.Uuid
+  name                String
+  slug                String
+  status              InstallationStatus   @default(ACTIVE)
+  config              Json                 @default("{}") @db.JsonB
+  lastError           String?
+  createdByUserId     String?              @db.Uuid
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  definition          PluginDefinition     @relation(fields: [pluginDefinitionId], references: [id], onDelete: Restrict)
+  credential          Credential?          @relation(fields: [organizationId, credentialId], references: [organizationId, id], onDelete: Restrict)
+  agentVersionPlugins AgentVersionPlugin[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@index([pluginDefinitionId])
+}
+
+model Agent {
+  id              String         @id @default(uuid()) @db.Uuid
+  organizationId  String         @db.Uuid
+  name            String
+  slug            String
+  description     String?
+  status          AgentStatus    @default(DRAFT)
+  createdByUserId String?        @db.Uuid
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
+  deletedAt       DateTime?      @db.Timestamptz(3)
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  versions        AgentVersion[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, status, updatedAt])
+}
+
+model AgentVersion {
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @db.Uuid
+  agentId           String               @db.Uuid
+  modelDefinitionId String               @db.Uuid
+  version           Int
+  status            VersionStatus        @default(DRAFT)
+  systemPrompt      String               @db.Text
+  modelParameters   Json                 @default("{}") @db.JsonB
+  maxSteps          Int                  @default(12)
+  timeoutMs         Int                  @default(300000)
+  memoryConfig      Json                 @default("{}") @db.JsonB
+  guardrailConfig   Json                 @default("{}") @db.JsonB
+  publishedAt       DateTime?            @db.Timestamptz(3)
+  createdByUserId   String?              @db.Uuid
+  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent             Agent                @relation(fields: [organizationId, agentId], references: [organizationId, id], onDelete: Cascade)
+  model             ModelDefinition      @relation(fields: [modelDefinitionId], references: [id], onDelete: Restrict)
+  plugins           AgentVersionPlugin[]
+  workflowNodes     WorkflowNode[]
+  executions        Execution[]
+  executionSteps    ExecutionStep[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, agentId, version])
+  @@index([organizationId, agentId, status])
+  @@index([modelDefinitionId])
+}
+
+model AgentVersionPlugin {
+  organizationId       String             @db.Uuid
+  agentVersionId       String             @db.Uuid
+  pluginInstallationId String             @db.Uuid
+  config               Json               @default("{}") @db.JsonB
+  permissions          Json               @default("{}") @db.JsonB
+  order                Int                @default(0)
+  createdAt            DateTime           @default(now()) @db.Timestamptz(3)
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentVersion         AgentVersion       @relation(fields: [organizationId, agentVersionId], references: [organizationId, id], onDelete: Cascade)
+  installation         PluginInstallation @relation(fields: [organizationId, pluginInstallationId], references: [organizationId, id], onDelete: Restrict)
+
+  @@id([organizationId, agentVersionId, pluginInstallationId])
+  @@index([organizationId, pluginInstallationId])
+}
+
+model Workflow {
+  id              String            @id @default(uuid()) @db.Uuid
+  organizationId  String            @db.Uuid
+  name            String
+  slug            String
+  description     String?
+  status          WorkflowStatus    @default(DRAFT)
+  createdByUserId String?           @db.Uuid
+  createdAt       DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime          @updatedAt @db.Timestamptz(3)
+  deletedAt       DateTime?         @db.Timestamptz(3)
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  versions        WorkflowVersion[]
+  triggers        WorkflowTrigger[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, slug])
+  @@index([organizationId, status, updatedAt])
+}
+
+model WorkflowVersion {
+  id              String         @id @default(uuid()) @db.Uuid
+  organizationId  String         @db.Uuid
+  workflowId      String         @db.Uuid
+  version         Int
+  status          VersionStatus  @default(DRAFT)
+  inputSchema     Json           @default("{}") @db.JsonB
+  outputSchema    Json           @default("{}") @db.JsonB
+  settings        Json           @default("{}") @db.JsonB
+  publishedAt     DateTime?      @db.Timestamptz(3)
+  createdByUserId String?        @db.Uuid
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflow        Workflow       @relation(fields: [organizationId, workflowId], references: [organizationId, id], onDelete: Cascade)
+  nodes           WorkflowNode[]
+  edges           WorkflowEdge[]
+  executions      Execution[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, workflowId, version])
+  @@index([organizationId, workflowId, status])
+}
+
+model WorkflowNode {
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @db.Uuid
+  workflowVersionId String           @db.Uuid
+  agentVersionId    String?          @db.Uuid
+  key               String
+  name              String
+  kind              WorkflowNodeKind
+  config            Json             @default("{}") @db.JsonB
+  positionX         Float            @default(0)
+  positionY         Float            @default(0)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflowVersion   WorkflowVersion  @relation(fields: [organizationId, workflowVersionId], references: [organizationId, id], onDelete: Cascade)
+  agentVersion      AgentVersion?    @relation(fields: [organizationId, agentVersionId], references: [organizationId, id], onDelete: Restrict)
+  outgoingEdges     WorkflowEdge[]   @relation("EdgeSource")
+  incomingEdges     WorkflowEdge[]   @relation("EdgeTarget")
+
+  @@unique([organizationId, workflowVersionId, id])
+  @@unique([organizationId, workflowVersionId, key])
+  @@index([organizationId, agentVersionId])
+}
+
+model WorkflowEdge {
+  id                String          @id @default(uuid()) @db.Uuid
+  organizationId    String          @db.Uuid
+  workflowVersionId String          @db.Uuid
+  sourceNodeId      String          @db.Uuid
+  targetNodeId      String          @db.Uuid
+  label             String?
+  condition         Json?           @db.JsonB
+  priority          Int             @default(0)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflowVersion   WorkflowVersion @relation(fields: [organizationId, workflowVersionId], references: [organizationId, id], onDelete: Cascade)
+  sourceNode        WorkflowNode    @relation("EdgeSource", fields: [organizationId, workflowVersionId, sourceNodeId], references: [organizationId, workflowVersionId, id], onDelete: Cascade)
+  targetNode        WorkflowNode    @relation("EdgeTarget", fields: [organizationId, workflowVersionId, targetNodeId], references: [organizationId, workflowVersionId, id], onDelete: Cascade)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, workflowVersionId, sourceNodeId, targetNodeId, priority])
+  @@index([organizationId, workflowVersionId])
+}
+
+model WorkflowTrigger {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @db.Uuid
+  workflowId      String       @db.Uuid
+  name            String
+  kind            TriggerKind
+  enabled         Boolean      @default(true)
+  config          Json         @default("{}") @db.JsonB
+  secretHash      String?
+  nextRunAt       DateTime?    @db.Timestamptz(3)
+  lastTriggeredAt DateTime?    @db.Timestamptz(3)
+  createdByUserId String?      @db.Uuid
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime     @updatedAt @db.Timestamptz(3)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflow        Workflow     @relation(fields: [organizationId, workflowId], references: [organizationId, id], onDelete: Cascade)
+  executions      Execution[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, workflowId, name])
+  @@index([organizationId, enabled, nextRunAt])
+}
+
+model Execution {
+  id                String           @id @default(uuid()) @db.Uuid
+  organizationId    String           @db.Uuid
+  kind              ExecutionKind
+  agentVersionId    String?          @db.Uuid
+  workflowVersionId String?          @db.Uuid
+  triggerId         String?          @db.Uuid
+  initiatedByUserId String?          @db.Uuid
+  idempotencyKey    String?
+  status            ExecutionStatus  @default(QUEUED)
+  input             Json             @default("{}") @db.JsonB
+  output            Json?            @db.JsonB
+  errorCode         String?
+  errorMessage      String?
+  dshSessionId      String?
+  traceId           String?
+  totalInputTokens  Int              @default(0)
+  totalOutputTokens Int              @default(0)
+  totalCost         Decimal          @default(0) @db.Decimal(18, 8)
+  queuedAt          DateTime         @default(now()) @db.Timestamptz(3)
+  startedAt         DateTime?        @db.Timestamptz(3)
+  finishedAt        DateTime?        @db.Timestamptz(3)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentVersion      AgentVersion?    @relation(fields: [organizationId, agentVersionId], references: [organizationId, id], onDelete: Restrict)
+  workflowVersion   WorkflowVersion? @relation(fields: [organizationId, workflowVersionId], references: [organizationId, id], onDelete: Restrict)
+  trigger           WorkflowTrigger? @relation(fields: [organizationId, triggerId], references: [organizationId, id], onDelete: Restrict)
+  steps             ExecutionStep[]
+  events            ExecutionEvent[]
+  usageEvents       UsageEvent[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, agentVersionId, createdAt])
+  @@index([organizationId, workflowVersionId, createdAt])
+  @@index([traceId])
+}
+
+model ExecutionStep {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @db.Uuid
+  executionId    String           @db.Uuid
+  agentVersionId String?          @db.Uuid
+  nodeKey        String?
+  parentStepId   String?          @db.Uuid
+  sequence       Int
+  attempt        Int              @default(1)
+  status         ExecutionStatus  @default(QUEUED)
+  input          Json             @default("{}") @db.JsonB
+  output         Json?            @db.JsonB
+  errorCode      String?
+  errorMessage   String?
+  dshSessionId   String?
+  startedAt      DateTime?        @db.Timestamptz(3)
+  finishedAt     DateTime?        @db.Timestamptz(3)
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime         @updatedAt @db.Timestamptz(3)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  execution      Execution        @relation(fields: [organizationId, executionId], references: [organizationId, id], onDelete: Cascade)
+  agentVersion   AgentVersion?    @relation(fields: [organizationId, agentVersionId], references: [organizationId, id], onDelete: Restrict)
+  events         ExecutionEvent[]
+  usageEvents    UsageEvent[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, executionId, sequence, attempt])
+  @@index([organizationId, executionId, status])
+}
+
+model ExecutionEvent {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  executionId    String         @db.Uuid
+  stepId         String?        @db.Uuid
+  sequence       Int
+  level          LogLevel       @default(INFO)
+  type           String
+  message        String?
+  payload        Json?          @db.JsonB
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  execution      Execution      @relation(fields: [organizationId, executionId], references: [organizationId, id], onDelete: Cascade)
+  step           ExecutionStep? @relation(fields: [organizationId, stepId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, executionId, sequence])
+  @@index([organizationId, executionId, createdAt])
+  @@index([organizationId, level, createdAt])
+}
+
+model UsageEvent {
+  id                String          @id @default(uuid()) @db.Uuid
+  organizationId    String          @db.Uuid
+  executionId       String          @db.Uuid
+  stepId            String?         @db.Uuid
+  modelDefinitionId String          @db.Uuid
+  providerRequestId String?
+  inputTokens       Int             @default(0)
+  outputTokens      Int             @default(0)
+  cachedInputTokens Int             @default(0)
+  cost              Decimal         @default(0) @db.Decimal(18, 8)
+  occurredAt        DateTime        @default(now()) @db.Timestamptz(3)
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  execution         Execution       @relation(fields: [organizationId, executionId], references: [organizationId, id], onDelete: Cascade)
+  step              ExecutionStep?  @relation(fields: [organizationId, stepId], references: [organizationId, id], onDelete: Restrict)
+  model             ModelDefinition @relation(fields: [modelDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, occurredAt])
+  @@index([organizationId, executionId])
+  @@index([modelDefinitionId, occurredAt])
+}
+
+model Subscription {
+  id                   String             @id @default(uuid()) @db.Uuid
+  organizationId       String             @unique @db.Uuid
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  planKey              String             @default("starter")
+  status               SubscriptionStatus @default(TRIALING)
+  seats                Int                @default(1)
+  currentPeriodStart   DateTime?          @db.Timestamptz(3)
+  currentPeriodEnd     DateTime?          @db.Timestamptz(3)
+  trialEndsAt          DateTime?          @db.Timestamptz(3)
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime           @updatedAt @db.Timestamptz(3)
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status, currentPeriodEnd])
+}
+
+model AuditLog {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  actorKind      AuditActorKind
+  actorId        String?
+  action         String
+  resourceType   String
+  resourceId     String?
+  ipAddress      String?
+  userAgent      String?
+  metadata       Json           @default("{}") @db.JsonB
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, resourceType, resourceId])
+}
+
+model ExternalWebhookEvent {
+  id              String             @id @default(uuid()) @db.Uuid
+  organizationId  String?            @db.Uuid
+  provider        String
+  externalEventId String
+  status          WebhookEventStatus @default(RECEIVED)
+  payload         Json               @db.JsonB
+  errorMessage    String?
+  receivedAt      DateTime           @default(now()) @db.Timestamptz(3)
+  processedAt     DateTime?          @db.Timestamptz(3)
+  organization    Organization?      @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, externalEventId])
+  @@index([status, receivedAt])
+  @@index([organizationId, receivedAt])
+}
+
+model OutboxEvent {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @db.Uuid
+  aggregateType  String
+  aggregateId    String
+  type           String
+  payload        Json         @db.JsonB
+  status         OutboxStatus @default(PENDING)
+  attempts       Int          @default(0)
+  availableAt    DateTime     @default(now()) @db.Timestamptz(3)
+  publishedAt    DateTime?    @db.Timestamptz(3)
+  lastError      String?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status, availableAt])
+  @@index([organizationId, aggregateType, aggregateId])
+}

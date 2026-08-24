@@ -1,0 +1,16 @@
+node_modules/
+.turbo/
+.next/
+dist/
+coverage/
+.env
+.env.local
+.env.*.local
+!.env.example
+packages/database/src/generated/
+*.log
+*.tsbuildinfo
+.DS_Store
+.railway/*
+!.railway/railway.ts
+.dsh/
