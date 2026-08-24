@@ -36,7 +36,7 @@ export default defineRailway(() => {
     },
   });
 
-  const web = service("web", {
+  const web = service("BRAINCREW", {
     source: github(repository),
     build: "pnpm turbo run build --filter=@braincrew/web",
     start: "pnpm --filter @braincrew/web start",

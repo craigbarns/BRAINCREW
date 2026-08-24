@@ -82,7 +82,7 @@ Le seed installe les définitions DeepSeek et les trois plugins approuvés avant
 
 ## Déploiement Railway
 
-La configuration actuelle est déclarée dans `.railway/railway.ts` : `web`, `api`, `worker` et `redis`, tous en région Europe Ouest et reliés au dépôt `craigbarns/BRAINCREW`. Installer la CLI récente et examiner le plan avant application :
+La configuration actuelle est déclarée dans `.railway/railway.ts` : `BRAINCREW` (web), `api`, `worker` et `redis`, tous en région Europe Ouest et reliés au dépôt `craigbarns/BRAINCREW`. Installer la CLI récente et examiner le plan avant application :
 
 ```bash
 npm install --global @railway/cli@latest
@@ -95,7 +95,7 @@ railway config apply
 Renseigner ensuite les variables marquées `preserve()` dans chaque service Railway, puis déployer :
 
 ```bash
-railway up --service web --ci
+railway up --service BRAINCREW --ci
 railway up --service api --ci
 railway up --service worker --ci
 railway status
