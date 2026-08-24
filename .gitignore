@@ -14,3 +14,4 @@ packages/database/src/generated/
 .railway/*
 !.railway/railway.ts
 .dsh/
+supabase/.temp/
