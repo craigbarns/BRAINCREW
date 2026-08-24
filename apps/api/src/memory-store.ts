@@ -36,6 +36,27 @@ export class MemoryBraincrewStore implements BraincrewStore {
       modelName: "deepseek-reasoner",
       displayName: "DeepSeek Reasoner",
     },
+    {
+      id: "00000000-0000-4000-8000-000000000022",
+      key: "openai-gpt-5.6-terra",
+      provider: "openai",
+      modelName: "gpt-5.6-terra",
+      displayName: "OpenAI GPT-5.6 Terra",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000023",
+      key: "openai-gpt-5.6-luna",
+      provider: "openai",
+      modelName: "gpt-5.6-luna",
+      displayName: "OpenAI GPT-5.6 Luna",
+    },
+    {
+      id: "00000000-0000-4000-8000-000000000024",
+      key: "openai-gpt-5.6-sol",
+      provider: "openai",
+      modelName: "gpt-5.6-sol",
+      displayName: "OpenAI GPT-5.6 Sol",
+    },
   ];
 
   private readonly plugins = [

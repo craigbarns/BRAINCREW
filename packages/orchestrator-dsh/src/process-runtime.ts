@@ -48,6 +48,14 @@ export function buildDshPatch(request: RuntimeRequest): unknown[] {
 
   return [
     {
+      id: "llm-pi-ai",
+      config: {
+        providers: {
+          openai: { apiKeyEnv: "OPENAI_API_KEY" },
+        },
+      },
+    },
+    {
       id: "agent-default-model",
       config: { provider: request.provider, model: request.model },
     },
@@ -98,6 +106,7 @@ export class DshProcessRuntime implements AgentRuntime {
         DSH_CWD: runDirectory,
         DSH_PERMISSION_MODE: "read-only",
         DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ?? "",
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
       },
       stdio: ["ignore", "pipe", "pipe"],
     });

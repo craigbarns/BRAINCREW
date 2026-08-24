@@ -22,8 +22,12 @@ describe("DSH process isolation patch", () => {
           permissions: {},
         },
       ],
-    }) as Array<{ id: string; disabled?: boolean; name?: string }>;
+    }) as Array<{ id: string; disabled?: boolean; name?: string; config?: unknown }>;
 
+    expect(patch).toContainEqual({
+      id: "llm-pi-ai",
+      config: { providers: { openai: { apiKeyEnv: "OPENAI_API_KEY" } } },
+    });
     expect(patch).toContainEqual(expect.objectContaining({ id: "tool-bash", disabled: true }));
     expect(patch).toContainEqual(
       expect.objectContaining({

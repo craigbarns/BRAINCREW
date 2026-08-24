@@ -92,7 +92,7 @@ railway config plan
 railway config apply
 ```
 
-Renseigner ensuite les variables marquées `preserve()` dans chaque service Railway, puis déployer :
+Renseigner ensuite les variables marquées `preserve()` dans chaque service Railway, puis déployer. Le worker accepte `DEEPSEEK_API_KEY` pour les routes DeepSeek et `OPENAI_API_KEY` pour les routes OpenAI ; le catalogue initial propose GPT-5.6 Terra, Luna et Sol.
 
 ```bash
 railway up --service BRAINCREW --ci
@@ -103,7 +103,7 @@ railway status
 
 Configurer le webhook Stripe sur `https://api.braincrew.ai/v1/webhooks/stripe`, puis placer le secret de signature dans `STRIPE_WEBHOOK_SECRET`. Faire pointer les DNS de `braincrew.ai` et `api.braincrew.ai` vers les cibles données par Railway.
 
-En attendant les DNS personnalisés, les URLs Railway générées sont `https://braincrew-production.up.railway.app` et `https://api-production-720e.up.railway.app`. Le CORS API accepte temporairement les deux origines web.
+En attendant les DNS personnalisés, les URLs Railway générées sont `https://braincrew-production-c6e7.up.railway.app` et `https://api-production-720e.up.railway.app`. Le CORS API accepte temporairement les deux origines web.
 
 ## Contrôles qualité
 

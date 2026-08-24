@@ -17,6 +17,9 @@ const ids = {
   organization: "00000000-0000-4000-8000-000000000010",
   chatModel: "00000000-0000-4000-8000-000000000020",
   reasonerModel: "00000000-0000-4000-8000-000000000021",
+  openAiTerraModel: "00000000-0000-4000-8000-000000000022",
+  openAiLunaModel: "00000000-0000-4000-8000-000000000023",
+  openAiSolModel: "00000000-0000-4000-8000-000000000024",
   webPlugin: "00000000-0000-4000-8000-000000000030",
   gmailPlugin: "00000000-0000-4000-8000-000000000031",
   crmPlugin: "00000000-0000-4000-8000-000000000032",
@@ -102,6 +105,51 @@ async function main() {
       modelName: "deepseek-reasoner",
       displayName: "DeepSeek Reasoner",
       capabilities: { tools: true, reasoning: true },
+    },
+  });
+
+  await prisma.modelDefinition.upsert({
+    where: { key: "openai-gpt-5.6-terra" },
+    update: {},
+    create: {
+      id: ids.openAiTerraModel,
+      key: "openai-gpt-5.6-terra",
+      provider: "openai",
+      modelName: "gpt-5.6-terra",
+      displayName: "OpenAI GPT-5.6 Terra",
+      capabilities: { tools: true, reasoning: true, vision: true, streaming: true },
+      inputPricePerMToken: "2",
+      outputPricePerMToken: "12",
+    },
+  });
+
+  await prisma.modelDefinition.upsert({
+    where: { key: "openai-gpt-5.6-luna" },
+    update: {},
+    create: {
+      id: ids.openAiLunaModel,
+      key: "openai-gpt-5.6-luna",
+      provider: "openai",
+      modelName: "gpt-5.6-luna",
+      displayName: "OpenAI GPT-5.6 Luna",
+      capabilities: { tools: true, reasoning: true, vision: true, streaming: true },
+      inputPricePerMToken: "0.2",
+      outputPricePerMToken: "1.2",
+    },
+  });
+
+  await prisma.modelDefinition.upsert({
+    where: { key: "openai-gpt-5.6-sol" },
+    update: {},
+    create: {
+      id: ids.openAiSolModel,
+      key: "openai-gpt-5.6-sol",
+      provider: "openai",
+      modelName: "gpt-5.6-sol",
+      displayName: "OpenAI GPT-5.6 Sol",
+      capabilities: { tools: true, reasoning: true, vision: true, streaming: true },
+      inputPricePerMToken: "4",
+      outputPricePerMToken: "20",
     },
   });
 

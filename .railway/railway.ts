@@ -72,6 +72,7 @@ export default defineRailway(() => {
       REDIS_URL: queue.env.REDIS_URL,
       DSH_EXECUTION_MODE: "process",
       DEEPSEEK_API_KEY: preserve(),
+      OPENAI_API_KEY: preserve(),
       ENCRYPTION_MASTER_KEY: preserve(),
       WORKER_CONCURRENCY: "4",
     },
