@@ -29,7 +29,10 @@ export interface BuildAppOptions {
 export async function buildApp(options: BuildAppOptions): Promise<FastifyInstance> {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
 
-  await app.register(cors, { origin: options.config.WEB_ORIGIN, credentials: true });
+  await app.register(cors, {
+    origin: options.config.WEB_ORIGIN.split(",").map((origin) => origin.trim()),
+    credentials: true,
+  });
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(rateLimit, { max: 200, timeWindow: "1 minute" });
   await app.register(swagger, {

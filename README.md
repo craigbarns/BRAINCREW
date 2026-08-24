@@ -103,6 +103,8 @@ railway status
 
 Configurer le webhook Stripe sur `https://api.braincrew.ai/v1/webhooks/stripe`, puis placer le secret de signature dans `STRIPE_WEBHOOK_SECRET`. Faire pointer les DNS de `braincrew.ai` et `api.braincrew.ai` vers les cibles données par Railway.
 
+En attendant les DNS personnalisés, les URLs Railway générées sont `https://braincrew-production.up.railway.app` et `https://api-production-720e.up.railway.app`. Le CORS API accepte temporairement les deux origines web.
+
 ## Contrôles qualité
 
 ```bash
