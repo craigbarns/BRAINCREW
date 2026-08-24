@@ -71,6 +71,9 @@ importers:
       bullmq:
         specifier: ^5.58.5
         version: 5.81.3
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.4.2
       fastify:
         specifier: ^5.5.0
         version: 5.12.1
@@ -157,6 +160,9 @@ importers:
       bullmq:
         specifier: ^5.58.5
         version: 5.81.3
+      dotenv:
+        specifier: ^17.2.2
+        version: 17.4.2
       ioredis:
         specifier: ^5.7.0
         version: 5.11.1
