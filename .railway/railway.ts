@@ -9,7 +9,8 @@ export default defineRailway(() => {
   const api = service("api", {
     source: github(repository),
     build: "pnpm turbo run build --filter=@braincrew/api",
-    preDeploy: "pnpm db:deploy",
+    preDeploy:
+      'if [ -n "$DIRECT_URL" ]; then pnpm db:deploy; else echo "DIRECT_URL unset, skipping migrations"; fi',
     start: "pnpm --filter @braincrew/api start",
     healthcheck: "/health",
     healthcheckTimeout: 120,

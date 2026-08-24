@@ -3,7 +3,7 @@
 L’infrastructure Railway est déclarée dans `.railway/railway.ts` avec le SDK IaC officiel :
 
 - `BRAINCREW` : Next.js, futur domaine `braincrew.ai` (service GitHub existant conservé) ;
-- `api` : Fastify, futur domaine `api.braincrew.ai`, migration Prisma en pre-deploy ;
+- `api` : Fastify, futur domaine `api.braincrew.ai`, migration Prisma en pre-deploy dès que `DIRECT_URL` est défini ;
 - `worker` : BullMQ + DeepSeek Harness, sans domaine public ;
 - `redis` : file d’exécution privée.
 
