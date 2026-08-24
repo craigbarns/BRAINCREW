@@ -8,6 +8,7 @@ VALUES (
 )
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "organization members can read assets" ON storage.objects;
 CREATE POLICY "organization members can read assets"
 ON storage.objects FOR SELECT TO authenticated
 USING (
@@ -20,6 +21,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "organization admins can upload assets" ON storage.objects;
 CREATE POLICY "organization admins can upload assets"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
@@ -33,6 +35,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "organization admins can update assets" ON storage.objects;
 CREATE POLICY "organization admins can update assets"
 ON storage.objects FOR UPDATE TO authenticated
 USING (
@@ -55,6 +58,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "organization admins can delete assets" ON storage.objects;
 CREATE POLICY "organization admins can delete assets"
 ON storage.objects FOR DELETE TO authenticated
 USING (
