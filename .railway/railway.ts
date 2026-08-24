@@ -29,6 +29,7 @@ export default defineRailway(() => {
       REDIS_URL: queue.env.REDIS_URL,
       SUPABASE_URL: preserve(),
       SUPABASE_PUBLISHABLE_KEY: preserve(),
+      SUPABASE_SERVICE_ROLE_KEY: preserve(),
       STRIPE_SECRET_KEY: preserve(),
       STRIPE_WEBHOOK_SECRET: preserve(),
       STRIPE_PRICE_ID: preserve(),
