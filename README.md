@@ -72,9 +72,10 @@ export DATABASE_URL="$DIRECT_URL"
 pnpm db:deploy
 pnpm db:seed
 psql "$DIRECT_URL" --set ON_ERROR_STOP=1 --file infra/supabase/roles.sql
-psql "$DIRECT_URL" --set ON_ERROR_STOP=1 --file infra/supabase/auth-trigger.sql
-psql "$DIRECT_URL" --set ON_ERROR_STOP=1 --file infra/supabase/storage-policies.sql
+psql "$DIRECT_URL" --set ON_ERROR_STOP=1 --file infra/supabase/auth-function.sql
 ```
+
+Exécuter ensuite `auth-trigger.sql` et `storage-policies.sql` dans l’éditeur SQL Supabase avec le rôle propriétaire du projet. La séparation est intentionnelle : `braincrew_migrator` reste propriétaire de la fonction `SECURITY DEFINER`, tandis que le propriétaire Supabase est seul autorisé à installer le trigger sur `auth.users`.
 
 Après `roles.sql`, attribuer des mots de passe distincts à `braincrew_app` et `braincrew_worker` depuis le gestionnaire de secrets, puis construire les URLs runtime avec ces rôles. `DIRECT_URL` reste réservé aux migrations ; `WEBHOOK_DATABASE_URL` utilise un rôle privilégié séparé et n’est accessible qu’au service API.
 
